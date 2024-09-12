@@ -44,7 +44,7 @@ def define_logger():
     # logger.propagate = False  # Removes AWS Level Logging as it tracks root propagation as well
     return _logger
 
-def calc_business_days(today_date, exp_date):
+def calc_business_days(today_date, exp_date, fut:bool=False):
     holidays_23 = ['2023-01-26', '2023-03-07', '2023-03-30', '2023-04-04', '2023-04-07', '2023-04-14', '2023-05-01',
                    '2023-06-29', '2023-08-15', '2023-09-19', '2023-10-02', '2023-10-24', '2023-11-14', '2023-11-27',
                    '2023-12-25']
@@ -58,16 +58,24 @@ def calc_business_days(today_date, exp_date):
                       '2024-09-14', '2024-10-05', '2024-11-09', '2024-12-07']
     excluded_dates = pd.to_datetime(excluded_dates)
     holidays = holidays[~holidays.isin(excluded_dates)]
+
+    # if isinstance(today_date, pd.Series) and isinstance(exp_date, pd.Series):
+    #     today_date = today_date[0].tolist()
+    #     exp_date = exp_date[0].tolist()
     business_day_list = []
     i = 0
-    while i <= len(today_date):
-        t_d = pd.to_datetime(today_date[0][i])
-        ex_d = pd.to_datetime(exp_date[0][i])
+    while i < len(today_date[0]):
+        logger.info(i)
+        if fut:
+            t_d = pd.to_datetime(today_date[0].values[i])
+            ex_d = pd.to_datetime(exp_date[0].values[i])
+        else:
+            t_d = pd.to_datetime(today_date[0][i])
+            ex_d = pd.to_datetime(exp_date[0][i])
         business_days_left = pd.bdate_range(start=t_d, end=ex_d, holidays=holidays, freq='C', weekmask='1111100')
         actual_bus_days = len(business_days_left) - 1
         business_day_list.append(actual_bus_days)
         i += 1
-
     return business_day_list
 
     # for t_d, ex_d in zip(today_date, exp_date):

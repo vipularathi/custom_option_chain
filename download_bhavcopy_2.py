@@ -53,6 +53,7 @@ def nse_download(date,bhav='fo'):
         else:
             raise RuntimeError('Bhavcopy not downloaded. Check the time of download.')
     bhav_file = [entry_ for entry_ in os.listdir(file_path) if entry_.endswith('.csv')][0]
+    logger.info(bhav_file)
     df = pd.read_csv(os.path.join(file_path, bhav_file), index_col=False)
     return df
 

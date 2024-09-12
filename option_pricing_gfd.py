@@ -59,4 +59,4 @@ def extract_ticker_info(ticker):
             expiry = f"{day}-{month.capitalize()}-{year}"
             return symbol, expiry, None, 'XX'
 
-normal_gfd = change_format(gfd_path)
+modified_gfd = change_format(gfd_path)
