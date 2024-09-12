@@ -40,15 +40,21 @@ def nse_download(date,bhav='fo'):
     zip_data = io.BytesIO(response.content)
     with zipfile.ZipFile(zip_data, 'r') as zip_ref:
         zip_ref.extractall(file_path)
-    print(f'bhavcopy downloaded and extracted. File path is {file_path}')
+    print(f'Bhavcopy downloaded and extracted. File path is {file_path}')
     # print(f'file name is ')
-    a = os.scandir(file_path)
-    for entry in a:
-        if entry.is_file():
-            print(f'file name at the specified path is {entry.name}')
+    # a = os.scandir(file_path)
+    # for entry in a:
+    #     if entry.is_file():
+    #         print(f'file name at the specified path is {entry.name}')
 
     for entry_ in os.listdir(file_path):
         if entry_.endswith('.csv'):
             print(f'file name found using listdir is {entry_}')
-    print([entry_ for entry_ in os.listdir(file_path) if entry_.endswith('.csv')][0])
-nse_bhav = nse_download(yesterday)
+        else:
+            raise RuntimeError('Bhavcopy not downloaded. Check the time of download.')
+    bhav_file = [entry_ for entry_ in os.listdir(file_path) if entry_.endswith('.csv')][0]
+    df = pd.read_csv(os.path.join(file_path, bhav_file), index_col=False)
+    return df
+
+bhav_df = nse_download(yesterday)
+# print(bhav_df)
