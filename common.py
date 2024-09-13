@@ -20,8 +20,8 @@ status = [os.makedirs(_dir, exist_ok=True) for _dir in dirs if not os.path.exist
 #                         holidays=holidays)
 # b_days = b_days.append(pd.DatetimeIndex([pd.Timestamp(year=2024, month=1, day=20)]))
 # b_days = b_days[b_days <= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)].drop_duplicates().sort_values()
-today, yesterday = pd.to_datetime(datetime.now().date()), pd.to_datetime(datetime.now().date() - timedelta(days=1))
-# today, yesterday = pd.Timestamp(year = 2024, month=9, day=6), pd.Timestamp(year = 2024, month=9, day=5)
+# today, yesterday = pd.to_datetime(datetime.now().date()), pd.to_datetime(datetime.now().date() - timedelta(days=1))
+today, yesterday = pd.to_datetime(pd.Timestamp(year = 2024, month=9, day=6)), pd.to_datetime(pd.Timestamp(year = 2024, month=9, day=5))
 def define_logger():
     # Logging Definitions
     log_lvl = logging.DEBUG

@@ -57,5 +57,5 @@ def nse_download(date,bhav='fo'):
     df = pd.read_csv(os.path.join(file_path, bhav_file), index_col=False)
     return df
 
-bhav_df = nse_download(yesterday)
+bhav_df = nse_download(today)
 # print(bhav_df)

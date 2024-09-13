@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # from  py_vollib_vectorized import vectorized_black_scholes as bs
 from common import logger, calc_business_days, today, yesterday, data_dir
 from download_bhavcopy_2 import bhav_df
-from option_pricing_gfd import modified_gfd
+from option_pricing_gfd import modified_gfd, gfd_columns, gfd_columns_dict
 
 # bhav=pd.read_csv("/kaggle/input/bhav-copy/BhavCopy_NSE_FO_0_0_0_20240823_F_0000.csv")
 
@@ -23,10 +23,12 @@ if choice.lower() == 'bhavcopy':
                          'ChngInOpnIntrst': 'OI_Change', 'TtlTradgVol': 'Volume'}
 elif choice.lower() == 'gfd':
     bhav = modified_gfd.copy()
-    bhav_columns = ['Date', 'Symbol', 'Strike_Price', 'Close_Price', 'Spot', 'Prev_Close', 'OI', 'OI_Change', 'Volume',
-                    'CALDTE']
-
-
+    bhav = bhav[bhav['Time'] == '15:30:59']
+    bhav_columns = gfd_columns
+    bhav_columns_dict = gfd_columns_dict
+    # --------------------------------------------------------------------------------
+    # unknown in gfd - prevcloseprice, changeinoi, underlyingprice/spot
+    # --------------------------------------------------------------------------------
 # bhav = bhav_df
 # holiday_list=pd.read_csv("/kaggle/input/nse-holiday-list/Holidays.csv")
 
@@ -35,16 +37,24 @@ def optchain(bhav,bhav_columns, bhav_columns_dict):
     bhav.rename(columns=bhav_columns_dict,inplace=True)
     bhav["Date"]=pd.to_datetime(bhav.Date).copy()
     bhav["Expiry_Date"]=pd.to_datetime(bhav.Expiry_Date).copy()
-    bhav=bhav.reindex(columns=['Symbol', 'Expiry_Date', 'Strike_Price', 'Option_Type','Close_Price', 'Spot','Prev_Close', 'OI', 'OI_Change', 'Volume','Date'])
+    # if choice.lower() == 'bhavcopy':
+    #     bhav=bhav.reindex(columns=['Symbol', 'Expiry_Date', 'Strike_Price', 'Option_Type','Close_Price', 'Spot','Prev_Close', 'OI', 'OI_Change', 'Volume','Date'])
+    # elif choice.lower() == 'gfd':
+    bhav = bhav.reindex(
+        columns=['Symbol', 'Expiry_Date', 'Strike_Price', 'Option_Type', 'Close_Price', 'Spot', 'Prev_Close', 'OI',
+                 'OI_Change', 'Volume', 'Date'])
+    # logger.info(f'bhav test is \n{bhav}')
+    # bhav.to_csv(os.path.join(data_dir, f'bhav_test.csv'), index=False)
     bhav.fillna({"Strike_Price":0,"Option_Type":"XX"},inplace=True)
     bhav["CALDTE"]=((bhav.Expiry_Date-bhav.Date)/np.timedelta64(1, 'D')).astype("int")
+    # bhav.to_csv(os.path.join(data_dir, f'bhav_test1.csv'), index=False)
     bhavce=bhav.query("Option_Type=='CE'")[['Symbol', 'Expiry_Date', 'Strike_Price','Close_Price', 'Spot', 'Prev_Close', 'OI', 'OI_Change', 'Volume', 'Date','CALDTE']]
     bhavpe=bhav.query("Option_Type=='PE'")[['Symbol', 'Expiry_Date', 'Strike_Price','Close_Price', 'Spot', 'Prev_Close', 'OI', 'OI_Change', 'Volume', 'Date','CALDTE']]
     bhavchain=pd.merge(bhavce, bhavpe, on =['Symbol', 'Expiry_Date', 'Strike_Price','Spot','Date','CALDTE'], how = "outer",suffixes=("_CE","_PE"))
     start=[pd.to_datetime(bhavchain.Date).dt.date]
-    logger.info(f'start is \n{type(start)}\n{start}')
+    # logger.info(f'start is \n{type(start)}\n{start}')
     end= [pd.to_datetime(bhavchain.Expiry_Date).dt.date]
-    logger.info(f'end is \n{type(end)}\n{end}')
+    # logger.info(f'end is \n{type(end)}\n{end}')
     bhavchain['DTE'] = calc_business_days(today_date=start, exp_date=end)
     # hol=pd.to_datetime(holiday_list.Holidays,dayfirst=True).dt.date.tolist()
     # bdd = np.busdaycalendar(holidays=hol,weekmask=[1,1,1,1,1,0,0]) #Defining holiday calendar
@@ -54,7 +64,7 @@ def optchain(bhav,bhav_columns, bhav_columns_dict):
                                          'OI_Change_CE','OI_Change_PE','Prev_Close_CE','Prev_Close_PE','Date'])
     bhavchain.fillna(0,inplace=True)
     return bhavchain
-    # return True
+    # # return True
 # bhavchain=bhavchain.astype({'Symbol':'category','Expiry_Date':'category','DTE':'category','CALDTE':'category','Date':'category',
 #                             'Strike_Price':'float32','Close_Price_CE':'float32','Close_Price_PE':'float32','Prev_Close_CE':'float32','Prev_Close_CE':'float32',
 #                             'OI_CE':'int','OI_PE':'int','Volume_CE':'int','Volume_PE':'int','OI_Change_CE':'int','OI_Change_PE':'int'})
@@ -151,25 +161,26 @@ def straddle(df):
 
 bhavchain=optchain(bhav,bhav_columns, bhav_columns_dict)
 # logger.info(f'bhavchain is \n{bhavchain}')
-# bhavchain.to_csv(os.path.join(data_dir, f'bhavchain_{yesterday.date()}.csv'))
-# bhavfut=fut_summary(bhav,bhav_columns, bhav_columns_dict)
+# bhavchain.to_csv(os.path.join(data_dir, f'bhavchain_{today.date()}_1.csv'), index=False)
+bhavfut=fut_summary(bhav,bhav_columns, bhav_columns_dict)
 # logger.info(f'bhavfut is \n{bhavfut}')
-# bhavfut.to_csv(os.path.join(data_dir, f'bhavfut_{yesterday.date()}.csv'))
+# bhavfut.to_csv(os.path.join(data_dir, f'bhavfut_{yesterday.date()}_1.csv'), index=False)
 opt_summary=optsummary(bhavchain)
 logger.info(f'opt_summary is \n{opt_summary}')
-
-# print(bhavchain.query('Symbol=="NIFTY"'))
-# print(opt_summary.columns)
+opt_summary.to_csv(os.path.join(data_dir, f'option_summary_{yesterday.date()}_1.csv'), index=False)
 #
+#     # print(bhavchain.query('Symbol=="NIFTY"'))
+#     # print(opt_summary.columns)
+#     #
 df=pd.DataFrame(opt_summary.groupby(by=['Symbol','Expiry_Date'])[['OI_CE', 'OI_PE','OI_Change_CE', 'OI_Change_PE','Volume_CE','Volume_PE','CE_Cash_Delta_Cr', 'PE_Cash_Delta_Cr',
                                                                   'CE_Cash_Gamma_Cr', 'PE_Cash_Gamma_Cr', 'CE_Cash_Vega_Cr', 'PE_Cash_Vega_Cr','CE_Cash_Theta_Cr', 'PE_Cash_Theta_Cr',
                                                                   'CE_TV_Cr', 'PE_TV_Cr', 'CE_Total_Cr','PE_Total_Cr']].sum()).reset_index()
 df=pd.merge(df,straddle(opt_summary),on=['Symbol','Expiry_Date'],how='outer')
 df=pd.merge(df,opt_summary[['Symbol','Expiry_Date','Fwd','DTE']].drop_duplicates(),on=['Symbol','Expiry_Date'],how='inner')
-print(df)
-# df.to_csv(os.path.join(data_dir, f'opt_summary_{yesterday.date()}.csv'))
-#
-# print(df.query("Symbol=='MIDCPNIFTY'"))
-df.query('Symbol=="NIFTY"')['Volume_PE'].plot()
-plt.show()
+logger.info(df)
+df.to_csv(os.path.join(data_dir, f'opt_summary_df_{yesterday.date()}_1.csv'), index=False)
+#     #
+#     # print(df.query("Symbol=='MIDCPNIFTY'"))
+#     df.query('Symbol=="NIFTY"')['Volume_PE'].plot()
+# plt.show()
 # opt_summary.query('Symbol=="NIFTY" and DTE==9')[['IV']].plot()
